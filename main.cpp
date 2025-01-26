@@ -27,7 +27,7 @@
  *  [ ] sub_10002EB0
  *  [x] IsOwnProcessWindow
  *  [x] IsDesktopWindow
- *  [ ] sub_10003190
+ *  [x] SendShowDesktopInputs
  *  [ ] sub_100033C0
  *  [x] FindChildOfParent
  *  [x] FindTaskbarTasksWindow
@@ -36,7 +36,7 @@
  * 
  * + the 2 resources
  * 
- * = 53.57% reimplemented (15/28 functions, 2/2 resources)
+ * = 57.14% reimplemented (16/28 functions, 2/2 resources)
  */
 
 HINSTANCE g_hInst;
@@ -370,7 +370,7 @@ LRESULT HandleWheelScroll(WPARAM wParam, LPARAM lParam, HWND hWnd)
         }
         else
         {
-            sub_10003190();
+            SendShowDesktopInputs();
         }
 
         return 1;
@@ -388,6 +388,101 @@ LRESULT HandleWheelScroll(WPARAM wParam, LPARAM lParam, HWND hWnd)
     SendMessage(hWnd, 0x402, lresSm401, 4);
 
     return 1;
+}
+
+inline HWND FirstNearestVisibleTopLevelWindow(HWND hWnd, DWORD dwProcessIdSearch)
+{
+    RECT rc;
+    HWND hWndCur;
+
+    for (hWndCur = hWnd; hWndCur; hWndCur = GetWindow(hWndCur, GW_HWNDNEXT))
+    {
+        if (IsWindowVisible(hWndCur))
+        {
+            GetClientRect(hWndCur, &rc);
+            if (!IsRectEmpty(&rc))
+            {
+                DWORD dwProcessId = 0;
+                GetWindowThreadProcessId(hWndCur, &dwProcessId);
+                if (dwProcessId != dwProcessIdSearch ||
+                    (GetWindowLong(hWndCur, GWL_STYLE) & WS_CHILD | WS_POPUP == 0) &&
+                    (GetWindowLong(hWndCur, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) == 0)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    return hWndCur;
+}
+
+void SendShowDesktopInputs()
+{
+    if (GetConfig(TEXT("_ShowDesktop_Type")) == 2)
+    {
+        DWORD dwProcessId = 0;
+        HWND hWndTray = FindWindow(TEXT("Shell_TrayWnd"), nullptr);
+
+        if (hWndTray)
+        {
+            GetWindowThreadProcessId(hWndTray, &dwProcessId);
+        }
+
+        HWND hWndDesktop = GetDesktopWindow();
+        HWND hWndDesktopChild = GetWindow(hWndDesktop, GW_CHILD);
+
+        if (!hWndDesktopChild)
+        {
+            return;
+        }
+
+        if (!FirstNearestVisibleTopLevelWindow(hWndDesktopChild, dwProcessId))
+        {
+            return;
+        }
+    }
+
+    if (GetAsyncKeyState(VK_SHIFT) >= 0 &&
+        GetAsyncKeyState(VK_CONTROL) >= 0 &&
+        GetAsyncKeyState(VK_MENU) >= 0)
+    {
+        INPUT inputs[4] = {
+            {INPUT_KEYBOARD},
+            {INPUT_KEYBOARD},
+            {INPUT_KEYBOARD},
+            {INPUT_KEYBOARD}
+        };
+
+        if (GetConfig(TEXT("_ShowDesktop_Method")))
+        {
+            inputs[0].ki.wScan = VK_LWIN;
+            inputs[0].mi.dy = 9;
+
+            inputs[1].ki.wScan = VK_SPACE;
+            inputs[1].mi.dy = 8;
+
+            inputs[2].ki.wScan = VK_SPACE;
+            inputs[2].mi.dy = 10;
+
+            inputs[3].ki.wScan = VK_LWIN;
+            inputs[3].mi.dy = 11;
+        }
+        else
+        {
+            inputs[0].ki.wVk = VK_LWIN;
+
+            inputs[1].ki.wVk = 'D';
+
+            inputs[2].ki.wVk = 'D';
+            inputs[2].mi.dy = 2;
+
+            inputs[3].ki.wVk = VK_LWIN;
+            inputs[3].mi.dy = 2;
+        }
+
+        SendInput(ARRAYSIZE(inputs), inputs, sizeof(INPUT));
+    }
 }
 
 LRESULT OtherHookProc(int code, WPARAM wParam, LPARAM lParam)
