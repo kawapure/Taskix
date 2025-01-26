@@ -496,8 +496,7 @@ bool ChangeCursor(HWND hWnd, bool fHorizontal, HCURSOR *phCursor, HCURSOR *phCur
 {
     if (GetConfig(TEXT("ChangeCursor")) == 1)
     {
-        // TODO: Properly diffuse own binary name based on architecture.
-        HMODULE hm = GetModuleHandle(TEXT("Taskix64.dll"));
+        HMODULE hm = GetModuleHandle(TEXT(VER_FILENAME_STR));
 
         HCURSOR hCur = LoadCursor(
             hm, 

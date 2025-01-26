@@ -1,5 +1,11 @@
 ﻿#include <windows.h>
 
+#if _WIN64
+#define VER_FILENAME_STR "Taskix64.dll"
+#else
+#define VER_FILENAME_STR "Taskix32.dll"
+#endif
+
 #define VER_MAJOR 2
 #define VER_MINOR 1
 #define VER_PATCH 1
