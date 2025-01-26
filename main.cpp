@@ -26,7 +26,7 @@
  *  [x] FindChildWindow
  *  [ ] sub_10002EB0
  *  [x] IsOwnProcessWindow
- *  [ ] IsDesktopWindow
+ *  [x] IsDesktopWindow
  *  [ ] sub_10003190
  *  [ ] sub_100033C0
  *  [x] FindChildOfParent
@@ -36,7 +36,7 @@
  * 
  * + the 2 resources
  * 
- * = 46.43% reimplemented (13/28 functions, 2/2 resources)
+ * = 50.0% reimplemented (14/28 functions, 2/2 resources)
  */
 
 HINSTANCE g_hInst;
@@ -67,6 +67,27 @@ bool IsOwnProcessWindow(HWND hWnd)
     DWORD dwProcessId;
     GetWindowThreadProcessId(hWnd, &dwProcessId);
     return GetCurrentProcessId() == dwProcessId;
+}
+
+bool IsDesktopWindow(HWND hWnd)
+{
+    if (hWnd)
+    {
+        GetClassNameGlobalBuffer(hWnd);
+        if (lstrcmp(TextBuffer, TEXT("SysListView32")) == 0)
+        {
+            HWND hWndParent = GetParent(hWnd);
+            GetClassNameGlobalBuffer(hWndParent);
+            if (lstrcmp(TextBuffer, TEXT("SHELLDLL_DefView")) == 0)
+            {
+                HWND hWndParent = GetParent(hWnd);
+                GetClassNameGlobalBuffer(hWndParent);
+                return lstrcmp(TextBuffer, TEXT("Progman")) == 0;
+            }
+        }
+    }
+
+    return false;
 }
 
 bool FindChildWindow(HWND *phWnd, LPCTSTR szClassName, LPCTSTR szWindowText)
