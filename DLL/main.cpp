@@ -275,7 +275,7 @@ bool IsTaskSwitcherWindow(HWND hWnd, PDWORD pdwIsMicrosoft)
 #include <WindowsX.h>
 
 // XXX(isabella): Needs more work.
-LRESULT HandleWheelScroll(WPARAM wParam, LPARAM lParam, HWND hWnd)
+LRESULT HandleWheelScroll(WPARAM wParam, LPARAM lParam, HWND hWndHidden)
 {
     // Filter out this message if our settings doesn't allow this:
     if (wParam == WM_MOUSEWHEEL)
@@ -329,13 +329,12 @@ LRESULT HandleWheelScroll(WPARAM wParam, LPARAM lParam, HWND hWnd)
             v9 = 0;
         }
 
-        // TODO: what the hell is going on here? probably WM_USER because arguments
-        // being passed really don't make sense with TM_GETPOS
-        SendMessage(hWnd, 0x400, (WPARAM)hWndCursor, dwIsMicrosoft != 0 | (v9 != 0 ? 2 : 0));
+        // TODO: Look into hidden window (implemented in EXE)
+        SendMessage(hWndHidden, 0x400, (WPARAM)hWndCursor, dwIsMicrosoft != 0 | (v9 != 0 ? 2 : 0));
         return 1;
     }
 
-    LRESULT lresSm401 = SendMessage(hWnd, 0x401, (WPARAM)hWndCursor, dwIsMicrosoft != 0);
+    LRESULT lresSm401 = SendMessage(hWndHidden, 0x401, (WPARAM)hWndCursor, dwIsMicrosoft != 0);
     if (lresSm401 == -1)
     {
         if (GetConfig(TEXT("MiddleClickTaskbar")) != 1)
@@ -385,7 +384,7 @@ LRESULT HandleWheelScroll(WPARAM wParam, LPARAM lParam, HWND hWnd)
     }
 
     // TODO: research
-    SendMessage(hWnd, 0x402, lresSm401, 4);
+    SendMessage(hWndHidden, 0x402, lresSm401, 4);
 
     return 1;
 }
