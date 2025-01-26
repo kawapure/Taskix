@@ -15,7 +15,7 @@
  *  [x] GetConfig
  *  [ ] sub_10001420
  *  [ ] sub_100017C0
- *  [ ] sub_10001910
+ *  [x] PostCloseCommand
  *  [x] HandleWheelScroll
  *  [ ] sub_10002810
  *  [ ] sub_100028F0
@@ -36,7 +36,7 @@
  * 
  * + the 2 resources
  * 
- * = 67.86% reimplemented (19/28 functions, 2/2 resources)
+ * = 71.43% reimplemented (20/28 functions, 2/2 resources)
  */
 
 HINSTANCE g_hInst;
@@ -489,6 +489,17 @@ bool IsWindowRectWide(HWND hWnd)
     RECT rc;
     GetWindowRect(hWnd, &rc);
     return rc.right - rc.left > rc.bottom - rc.top;
+}
+
+bool PostCloseCommand(HWND hWnd)
+{
+    if (!IsWindow(hWnd) || !IsWindowEnabled(hWnd))
+    {
+        return false;
+    }
+
+    PostMessage(hWnd, WM_SYSCOMMAND, SC_CLOSE, NULL);
+    return true;
 }
 
 bool ChangeCursor(HWND hWnd, bool fHorizontal, HCURSOR *phCursor, HCURSOR *phCursorOld)
