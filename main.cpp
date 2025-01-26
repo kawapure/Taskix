@@ -19,7 +19,7 @@
  *  [x] HandleWheelScroll
  *  [ ] sub_10002810
  *  [ ] sub_100028F0
- *  [ ] sub_10002990
+ *  [x] ChangeCursor
  *  [ ] sub_10002A40
  *  [x] IsWindowRectWide
  *  [x] IsTaskSwitcherWindow
@@ -36,7 +36,7 @@
  * 
  * + the 2 resources
  * 
- * = 60.71% reimplemented (17/28 functions, 2/2 resources)
+ * = 64.29% reimplemented (18/28 functions, 2/2 resources)
  */
 
 HINSTANCE g_hInst;
@@ -490,6 +490,42 @@ bool IsWindowRectWide(HWND hWnd)
     RECT rc;
     GetWindowRect(hWnd, &rc);
     return rc.right - rc.left > rc.bottom - rc.top;
+}
+
+bool ChangeCursor(HWND hWnd, bool fHorizontal, HCURSOR *phCursor, HCURSOR *phCursorOld)
+{
+    if (GetConfig(TEXT("ChangeCursor")) == 1)
+    {
+        // TODO: Properly diffuse own binary name based on architecture.
+        HMODULE hm = GetModuleHandle(TEXT("Taskix64.dll"));
+
+        HCURSOR hCur = LoadCursor(
+            hm, 
+            MAKEINTRESOURCE(fHorizontal ? IDC_DRAGHORIZONTAL : IDC_DRAGVERTICAL)
+        );
+
+        *phCursor = hCur;
+
+        if (hCur)
+        {
+            HCURSOR hCurOld = GetCursor();
+            if (hCurOld != *phCursor)
+            {
+                *phCursorOld = hCurOld;
+            }
+
+            SetCursor(*phCursor);
+
+            if (fHorizontal)
+            {
+                return SetCapture(hWnd);
+            }
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 LRESULT OtherHookProc(int code, WPARAM wParam, LPARAM lParam)
