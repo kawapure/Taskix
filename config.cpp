@@ -1,8 +1,5 @@
 #include "config.h"
 
-// Stores window class, weird hacky shit:
-TCHAR g_szClass[6] = {0};
-
 CONFIGRESPONSE GetConfig(LPCTSTR szName)
 {
     HKEY hKey = nullptr;
@@ -125,7 +122,7 @@ BOOL WriteConfigValue(LPCTSTR szName, DWORD dwValue)
         hkSoftware,
         TEXT("Robust IT"),
         0,
-        g_szClass,
+        EmptyString,
         0,
         KEY_ALL_ACCESS,
         nullptr,
@@ -143,7 +140,7 @@ BOOL WriteConfigValue(LPCTSTR szName, DWORD dwValue)
         hkSoftware,
         TEXT("Taskix"),
         0,
-        g_szClass,
+        EmptyString,
         0,
         KEY_ALL_ACCESS,
         nullptr,

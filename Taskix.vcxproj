@@ -132,6 +132,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
+    <ClInclude Include="main.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

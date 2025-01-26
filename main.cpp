@@ -40,6 +40,11 @@
 
 HINSTANCE g_hInst;
 
+// Passed to RegCreateKeyEx class, which is a practice that some programmers did
+// in the past. WinAPI documentation has never been clear what that parameter is
+// for.
+TCHAR EmptyString[] = TEXT("");
+
 // Global text buffer used across the program for getting string values.
 TCHAR TextBuffer[512];
 
@@ -160,7 +165,7 @@ bool FindTaskbarTasksWindow(HWND *phWnd, PDWORD pdwIsMicrosoft)
     }
 
     if (GetConfig(TEXT("MultipleMonitors")) == 1 &&
-        FindChildOfParent(phWnd, TEXT("UltraMonDeskTaskBar"), TEXT("ToolbarWindow32"), Class) ||
+        FindChildOfParent(phWnd, TEXT("UltraMonDeskTaskBar"), TEXT("ToolbarWindow32"), TEXT("")) ||
         FindChildOfParent(phWnd, TEXT("UltraMon Taskbar"), TEXT("ToolbarWindow32"), TEXT("UltraMon Taskbar")))
     {
         return true;
