@@ -1,0 +1,4 @@
+#include "resource.h"
+
+IDC_DRAGHORIZONTAL   CURSOR   "DragHorizontal.cur"
+IDC_DRAGVERTICAL     CURSOR   "DragVertical.cur"
