@@ -21,7 +21,7 @@
  *  [ ] sub_100028F0
  *  [ ] sub_10002990
  *  [ ] sub_10002A40
- *  [ ] sub-10002A80
+ *  [x] IsWindowRectWide
  *  [x] IsTaskSwitcherWindow
  *  [x] FindChildWindow
  *  [ ] sub_10002EB0
@@ -36,7 +36,7 @@
  * 
  * + the 2 resources
  * 
- * = 57.14% reimplemented (16/28 functions, 2/2 resources)
+ * = 60.71% reimplemented (17/28 functions, 2/2 resources)
  */
 
 HINSTANCE g_hInst;
@@ -483,6 +483,13 @@ void SendShowDesktopInputs()
 
         SendInput(ARRAYSIZE(inputs), inputs, sizeof(INPUT));
     }
+}
+
+bool IsWindowRectWide(HWND hWnd)
+{
+    RECT rc;
+    GetWindowRect(hWnd, &rc);
+    return rc.right - rc.left > rc.bottom - rc.top;
 }
 
 LRESULT OtherHookProc(int code, WPARAM wParam, LPARAM lParam)
