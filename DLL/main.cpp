@@ -20,7 +20,7 @@
  *  [ ] sub_10002810
  *  [ ] sub_100028F0
  *  [x] ChangeCursor
- *  [ ] sub_10002A40
+ *  [x] RestoreCursor
  *  [x] IsWindowRectWide
  *  [x] IsTaskSwitcherWindow
  *  [x] FindChildWindow
@@ -36,7 +36,7 @@
  * 
  * + the 2 resources
  * 
- * = 64.29% reimplemented (18/28 functions, 2/2 resources)
+ * = 67.86% reimplemented (19/28 functions, 2/2 resources)
  */
 
 HINSTANCE g_hInst;
@@ -524,6 +524,23 @@ bool ChangeCursor(HWND hWnd, bool fHorizontal, HCURSOR *phCursor, HCURSOR *phCur
     }
 
     return false;
+}
+
+bool RestoreCursor(HCURSOR *phCursorOrig)
+{
+    bool fResult;
+
+    if ((fResult = GetConfig(TEXT("ChangeCursor"))) == 1)
+    {
+        if (*phCursorOrig)
+        {
+            SetCursor(*phCursorOrig);
+            fResult = ReleaseCapture();
+            *phCursorOrig = nullptr;
+        }
+    }
+
+    return fResult;
 }
 
 LRESULT OtherHookProc(int code, WPARAM wParam, LPARAM lParam)
