@@ -487,7 +487,7 @@ void SendShowDesktopInputs()
 
 LRESULT OtherHookProc(int code, WPARAM wParam, LPARAM lParam)
 {
-    if (code == 0)
+    if (code == HC_ACTION)
     {
         HWND hWnd = FindWindow(nullptr, TEXT("Taskix_hidden_window"));
         if (hWnd)
