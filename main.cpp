@@ -6,7 +6,7 @@
  * Currently implemented (names from IDA):
  *  [x] DllMain (export)
  *  [x] Hook (export)
- *  [ ] Unhook (export)
+ *  [x] Unhook (export)
  *  [x] GetDllVersion (export)
  *  [ ] MainHookProc
  *  [x] OtherHookProc
@@ -36,7 +36,7 @@
  * 
  * + the 2 resources
  * 
- * = 50.0% reimplemented (14/28 functions, 2/2 resources)
+ * = 53.57% reimplemented (15/28 functions, 2/2 resources)
  */
 
 HINSTANCE g_hInst;
@@ -424,6 +424,16 @@ __declspec(dllexport) EXTERN_C bool Hook(int a1)
             return true;
         }
     }
+}
+
+__declspec(dllexport) EXTERN_C bool Unhook()
+{
+    UnhookWindowsHookEx(g_hhkMain);
+    UnhookWindowsHookEx(g_hhkOther);
+    g_hhkMain = nullptr;
+    g_hhkOther = nullptr;
+
+    return true;
 }
 
 __declspec(dllexport) EXTERN_C UINT GetDllVersion()
