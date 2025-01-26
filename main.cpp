@@ -508,14 +508,14 @@ __declspec(dllexport) EXTERN_C bool Hook(int a1)
     if (!g_hhkMain && !g_hhkOther)
     {
         g_dword_1000F01C = a1;
-        g_hhkMain = SetWindowsHookEx(7, MainHookProc, g_hInst, 0);
+        g_hhkMain = SetWindowsHookEx(WH_MOUSE, MainHookProc, g_hInst, 0);
 
         if (GetConfig(TEXT("_WheelScroll_Method")) != 2)
         {
             return g_hhkMain != nullptr;
         }
 
-        g_hhkOther = SetWindowsHookEx(14, OtherHookProc, g_hInst, 0);
+        g_hhkOther = SetWindowsHookEx(WH_MOUSE_LL, OtherHookProc, g_hInst, 0);
 
         if (g_hhkMain && g_hhkMain)
         {
