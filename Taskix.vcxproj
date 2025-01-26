@@ -22,7 +22,7 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{87c16d21-fa53-41dc-8005-8ebdaab89e4f}</ProjectGuid>
-    <RootNamespace>TaskixRE</RootNamespace>
+    <RootNamespace>Taskix</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
