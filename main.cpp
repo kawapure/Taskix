@@ -498,6 +498,9 @@ LRESULT OtherHookProc(int code, WPARAM wParam, LPARAM lParam)
             }
         }
     }
+
+    // g_hhkMain use here is not a mistake; original implementation does that too.
+    return CallNextHookEx(g_hhkMain, code, wParam, lParam);
 }
 
 __declspec(dllexport) EXTERN_C bool Hook(int a1)
