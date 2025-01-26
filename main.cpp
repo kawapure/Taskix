@@ -1,4 +1,5 @@
 #include <windows.h>
+#include "resource.h"
 #include "config.h"
 
 /*
@@ -399,7 +400,7 @@ __declspec(dllexport) EXTERN_C bool Hook(int a1)
 
 __declspec(dllexport) EXTERN_C UINT GetDllVersion()
 {
-    return 20101;
+    return VER_GETDLLVERSION;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
