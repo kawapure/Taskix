@@ -25,7 +25,7 @@
  *  [x] IsTaskSwitcherWindow
  *  [x] FindChildWindow
  *  [ ] sub_10002EB0
- *  [ ] AlmostCertainly_IsExplorerProcess
+ *  [x] IsOwnProcessWindow
  *  [ ] IsDesktopWindow
  *  [ ] sub_10003190
  *  [ ] sub_100033C0
@@ -36,7 +36,7 @@
  * 
  * + the 2 resources
  * 
- * = 42.85% reimplemented (12/28 functions, 2/2 resources)
+ * = 46.43% reimplemented (13/28 functions, 2/2 resources)
  */
 
 HINSTANCE g_hInst;
@@ -61,6 +61,13 @@ HHOOK g_hhkOther;
 #define GetWindowTextGlobalBuffer(hWnd)         \
     memset(TextBuffer, 0, sizeof(TextBuffer));  \
     GetWindowText(hWnd, TextBuffer, 64)         \
+
+bool IsOwnProcessWindow(HWND hWnd)
+{
+    DWORD dwProcessId;
+    GetWindowThreadProcessId(hWnd, &dwProcessId);
+    return GetCurrentProcessId() == dwProcessId;
+}
 
 bool FindChildWindow(HWND *phWnd, LPCTSTR szClassName, LPCTSTR szWindowText)
 {
