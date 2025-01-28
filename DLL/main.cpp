@@ -31,12 +31,10 @@
  *  [ ] sub_100033C0
  *  [x] FindChildOfParent
  *  [x] FindTaskbarTasksWindow
- *  [ ] ThisIsInteresting
- *  [-] sub_10003C50 (looks like CRT code)
  * 
  * + the 2 resources
  * 
- * = 71.43% reimplemented (20/28 functions, 2/2 resources)
+ * = 74.07% reimplemented (20/27 functions, 2/2 resources)
  */
 
 HINSTANCE g_hInst;

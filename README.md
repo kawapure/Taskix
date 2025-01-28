@@ -8,7 +8,7 @@ With its last update being in 2009, and the homepage at which to download it hav
 
 ## Progress
 
-`Taskix{32, 64}.dll` (main DLL) is currently **71.43%** complete, featuring the following functions:
+`Taskix{32, 64}.dll` (main DLL) is currently **74.07%** complete, featuring the following functions:
  - [x] `DllMain` (export)
  - [x] `Hook` (export)
  - [x] `Unhook` (export)
@@ -36,6 +36,5 @@ With its last update being in 2009, and the homepage at which to download it hav
  - [ ] `sub_100033C0`
  - [x] `FindChildOfParent`
  - [x] `FindTaskbarTasksWindow`
- - [ ] `ThisIsInteresting`
 
 `Taskix{32, 64}.exe` (mostly configuration GUI) is currently **0%** complete. That is to say, development has not even begun on it yet.
