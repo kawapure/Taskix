@@ -17,7 +17,7 @@
  *  [ ] sub_100017C0
  *  [x] PostCloseCommand
  *  [x] HandleWheelScroll
- *  [ ] sub_10002810
+ *  [x] FindTaskbarButtonForWindow
  *  [x] SimulateClickCenter
  *  [x] ChangeCursor
  *  [x] RestoreCursor
@@ -34,7 +34,7 @@
  * 
  * + the 2 resources
  * 
- * = 77.8% reimplemented (21/27 functions, 2/2 resources)
+ * = 81.48% reimplemented (22/27 functions, 2/2 resources)
  */
 
 HINSTANCE g_hInst;
@@ -569,6 +569,39 @@ LRESULT SimulateClickCenter(HWND hWnd, int iButtonId)
     }
 
     return lr;
+}
+
+int FindTaskbarButtonForWindow(HWND hWndTaskbar, HWND hWndButtonTarget, int fIsMicrosoft)
+{
+    int cButtons = SendMessage(hWndTaskbar, TB_BUTTONCOUNT, NULL, NULL);
+
+    if (cButtons <= 0)
+    {
+        return -1;
+    }
+
+    for (int i = 0; i < cButtons; i++)
+    {
+        TBBUTTON tbButton = { 0 };
+
+        if (SendMessage(hWndTaskbar, TB_GETBUTTON, i, (LPARAM)&tbButton))
+        {
+            HWND hWnd = GetTaskbarButtonWindow(&tbButton, fIsMicrosoft);
+
+            if (hWnd == hWndButtonTarget)
+            {
+                return i;
+            }
+        }
+    }
+
+    return -1;
+}
+
+// Always inlined, from MainHookProc
+inline HWND GetTaskbarButtonWindow(TBBUTTON *ptbButton, bool fIsMicrosoft)
+{
+    return fIsMicrosoft ? *(HWND *)ptbButton->dwData : (HWND)ptbButton->dwData;
 }
 
 LRESULT OtherHookProc(int code, WPARAM wParam, LPARAM lParam)
