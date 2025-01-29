@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <CommCtrl.h>
 #include "resource.h"
 #include "config.h"
 
@@ -319,16 +320,16 @@ LRESULT HandleWheelScroll(WPARAM wParam, LPARAM lParam, HWND hWndHidden)
         bool fWheelDirection = GetConfig(TEXT("WheelScroll_Direction")) == 2;
 
         // probably a bool
-        int v9 = 1;
+        int fDraggedUp = 1;
 
         if (GET_X_LPARAM(lParam) >= 0xF000 && fWheelDirection ||
             GET_X_LPARAM(lParam) < 0xF000 && !fWheelDirection)
         {
-            v9 = 0;
+            fDraggedUp = 0;
         }
 
         // TODO: Look into hidden window (implemented in EXE)
-        SendMessage(hWndHidden, 0x400, (WPARAM)hWndCursor, dwIsMicrosoft != 0 | (v9 != 0 ? 2 : 0));
+        SendMessage(hWndHidden, 0x400, (WPARAM)hWndCursor, dwIsMicrosoft != 0 | (fDraggedUp != 0 ? 2 : 0));
         return 1;
     }
 
@@ -598,10 +599,521 @@ int FindTaskbarButtonForWindow(HWND hWndTaskbar, HWND hWndButtonTarget, int fIsM
     return -1;
 }
 
+
+struct TaskGroupThingProb
+{
+    int iFirstButtonId;
+    int iSearchButtonId;
+    int iLastButtonOffset;
+};
+
+bool sub_10002EB0(TaskGroupThingProb *pGroup, HWND hWnd, LONG iButtonId, bool fIsMicrosoft)
+{
+    pGroup->iSearchButtonId = iButtonId;
+
+    if (fIsMicrosoft)
+    {
+        int iFirstButtonId = iButtonId;
+
+        if (iButtonId < 0)
+        {
+            return;
+        }
+
+        do
+        {
+            TBBUTTON tbButton = { 0 };
+            SendMessage(hWnd, TB_GETBUTTON, iButtonId, (LPARAM)&tbButton);
+            if (tbButton.fsStyle & BTNS_DROPDOWN)
+            {
+                break;
+            }
+            --iFirstButtonId;
+        }
+        while (iFirstButtonId < 0);
+
+        if (iFirstButtonId < 0)
+        {
+            return false;
+        }
+
+        pGroup->iFirstButtonId = iFirstButtonId;
+
+        if (iFirstButtonId < 0)
+        {
+            return false;
+        }
+
+        int iLastButtonId = iButtonId + 1;
+        int cButtons = SendMessage(hWnd, TB_BUTTONCOUNT, NULL, NULL);
+
+        if (iButtonId + 1 < cButtons)
+        {
+            do
+            {
+                TBBUTTON tbButton = { 0 };
+                SendMessage(hWnd, TB_GETBUTTON, iButtonId, (LPARAM)&tbButton);
+                if (tbButton.fsState & BTNS_DROPDOWN)
+                {
+                    break;
+                }
+                ++iLastButtonId;
+            }
+            while (iLastButtonId < cButtons);
+        }
+
+        pGroup->iLastButtonOffset = iLastButtonId - pGroup->iFirstButtonId;
+    }
+
+    return true;
+}
+
+int sub_100033C0(HWND hWnd, POINT pt, int *pOut, HWND hWnd2, bool fIsMicrosoft)
+{
+    if (!IsWindow(hWnd))
+    {
+        return 0;
+    }
+
+    DWORD dwProcessId, dwProcessId2;
+    GetWindowThreadProcessId(hWnd, &dwProcessId);
+    GetWindowThreadProcessId(hWnd2, &dwProcessId2);
+
+    if (dwProcessId != dwProcessId2)
+    {
+        return 0;
+    }
+
+    GetClassNameGlobalBuffer(hWnd);
+    if (lstrcmp(TextBuffer, TEXT("ToolbarWindow32")))
+    {
+        return 0;
+    }
+
+    HWND hWndParent = GetParent(hWnd);
+    if (!hWndParent)
+    {
+        return 0;
+    }
+
+    if (!GetClassName(hWndParent, TextBuffer, 64))
+    {
+        return 0;
+    }
+
+    if (lstrcmp(TextBuffer, TEXT("SysPager")) != 0)
+    {
+        return 0;
+    }
+
+    hWndParent = GetParent(hWnd);
+    if (!hWndParent)
+    {
+        return 0;
+    }
+
+    if (!GetClassName(hWndParent, TextBuffer, 64))
+    {
+        return 0;
+    }
+
+    if (lstrcmp(TextBuffer, TEXT("MenuSite")) != 0)
+    {
+        return 0;
+    }
+
+    hWndParent = GetParent(hWndParent);
+    if (!hWndParent)
+    {
+        return 0;
+    }
+
+    if (!GetClassName(hWndParent, TextBuffer, 64))
+    {
+        return 0;
+    }
+
+    if (lstrcmp(TextBuffer, TEXT("BaseBar")) != 0)
+    {
+        return 0;
+    }
+
+    POINT point = pt;
+    ScreenToClient(hWnd, &point);
+
+    int iHit = SendMessage(hWnd, TB_HITTEST, NULL, (LPARAM)&point);
+    if (iHit < 0)
+    {
+        return 0;
+    }
+
+    TBBUTTON tbButton = { 0 };
+    if (!SendMessageA(hWnd, TB_GETBUTTON, iHit, (LPARAM)&tbButton))
+    {
+        return 0;
+    }
+
+    if (tbButton.idCommand == -1)
+    {
+        return 0;
+    }
+
+    int cButton = SendMessage(hWnd, TB_BUTTONCOUNT, NULL, NULL);
+    int iButtonId2 = iHit + tbButton.idCommand - cButton;
+    tbButton.iBitmap = 0;
+    *pOut = iButtonId2;
+
+
+}
+
 // Always inlined, from MainHookProc
 inline HWND GetTaskbarButtonWindow(TBBUTTON *ptbButton, bool fIsMicrosoft)
 {
     return fIsMicrosoft ? *(HWND *)ptbButton->dwData : (HWND)ptbButton->dwData;
+}
+
+
+HWND g_hWnd;
+POINT g_ptCurrent;
+bool g_fIsMicrosoft;
+bool g_fLeftButtonDown;
+int g_iHitTestResult;
+DWORD dword_1000F028;
+DWORD dword_1000F030;
+DWORD dword_1000F034;
+bool g_fIsDragging;
+DWORD dword_1000F04C;
+DWORD dword_1000F048;
+INT64 qword_1000CC90;
+POINT g_ptHit;
+HWND hWndTaskTarget;
+HCURSOR g_hCursor;
+HCURSOR g_hCursorOld;
+HWND g_hWndSomething;
+
+LRESULT MainHookProc(int code, WPARAM wParam, LPARAM lParam)
+{
+    PMOUSEHOOKSTRUCT pRet = (PMOUSEHOOKSTRUCT)lParam;
+    LONG y;
+    INT64 v44;
+    int *v45;
+    int *v46;
+    POINT point;
+
+    if (code == HC_ACTION)
+    {
+        HWND hWnd = (HWND)pRet->hwnd;
+        POINT pt = pRet->pt;
+        HWND hWndHiddenWindow = FindWindow(nullptr, TEXT("Taskix_hidden_window"));
+
+        if (!hWndHiddenWindow)
+        {
+            return CallNextHookEx(g_hhkMain, code, wParam, lParam);
+        }
+
+        y = pt.y;
+
+        if (wParam == WM_LBUTTONDOWN && wParam == WM_LBUTTONUP ||
+            GetConfig(TEXT("ShowDesktop")) == 1 ||
+            IsDesktopWindow(hWnd))
+        {
+            bool fDragged = pt.x != g_ptCurrent.x || pt.y != g_ptCurrent.y;
+
+            if (wParam != WM_LBUTTONDOWN || GetFocus() == hWnd)
+            {
+                g_ptCurrent.x = pt.x;
+                g_ptCurrent.y = y;
+            }
+            else
+            {
+                g_ptCurrent.x = -1;
+            }
+
+            if (wParam == WM_LBUTTONDOWN && GetFocus() != hWnd ||
+                wParam == WM_LBUTTONUP && GetFocus() == hWnd && !fDragged)
+            {
+                v44 = 0;
+                LODWORD(v45) = 0;
+                point.x = pt.x;
+                point.y = y;
+
+                ScreenToClient(hWnd, &point);
+
+                if (SendMessage(hWnd, LVM_HITTEST, NULL, (LPARAM)&point) == -1)
+                {
+                    SendShowDesktopInputs();
+                }
+            }
+        }
+
+        if (wParam == WM_MBUTTONDOWN && hWnd && g_fIsMicrosoft && 
+            GetConfig(TEXT("MiddleClickTabs")) == 1)
+        {
+            HWND hWnd = WindowFromPoint(pt);
+            int v39 = 0;
+            HWND hWndAAA = sub_100033C0(hWnd, pt, &v39, hWnd, g_fIsMicrosoft);
+
+            if (hWndAAA)
+            {
+                if (GetConfig(TEXT("MiddleClickTabs_Action")) == 2 ||
+                    GetAsyncKeyState(VK_CONTROL) < 0)
+                {
+                    PostMessage(hWnd, WM_KEYDOWN, VK_ESCAPE, NULL);
+                    PostCloseCommand(hWndAAAA);
+                }
+
+                if (GetConfig(TEXT("MiddleClickTabs_Action")) == 1)
+                {
+                    // Hidden window is implemented in Taskix.exe
+                    SendMessage(hWndHiddenWindow, WM_USER + 2, (WPARAM)hWndAAA, 4);
+                }
+                    
+                return CallNextHookEx(g_hhkMain, code, wParam, lParam);
+            }
+        }
+            
+        DWORD dwIsMicrosoft;
+        bool fIsTaskSwitcherWnd = IsTaskSwitcherWindow(hWnd, &dwIsMicrosoft);
+        if (fIsTaskSwitcherWnd)
+        {
+            g_hWnd = hWnd;
+            g_fIsMicrosoft = dwIsMicrosoft;
+        }
+            
+        if (GetConfig(TEXT("_WheelScroll_Method")) == 1 &&
+            HandleWheelScroll(wParam, (LPARAM)pRet->hwnd, hWndHiddenWindow))
+        {
+            return 1;
+        }
+
+        HWND hWnd_1 = g_hWnd;
+
+        //if (!fIsTaskSwitcherWnd)
+        //{
+        //    bool fLeftButtonDown = g_fLeftButtonDown;
+        //    if (!g_fLeftButtonDown || wParam != WM_MOUSEMOVE || WindowFromPoint((POINT)pt) != g_hWnd)
+        //    {
+        //        if (!fLeftButtonDown || wParam != WM_LBUTTONUP)
+        //        {
+        //            if (fLeftButtonDown)
+        //            {
+        //                goto LABEL_112;
+        //            }
+        //            if (wParam != WM_LBUTTONUP)
+        //            {
+        //                goto LABEL_112;
+        //            }
+        //            HWND v18 = WindowFromPoint((POINT)pt);
+        //            if (v18 != g_hWnd)
+        //            {
+        //                goto LABEL_112;
+        //            }
+        //        }
+        //    }
+        //}
+
+        if (fIsTaskSwitcherWnd ||
+            g_fLeftButtonDown && wParam == WM_MOUSEMOVE && WindowFromPoint(pt) == g_hWnd ||
+            g_fLeftButtonDown && wParam == WM_LBUTTONUP ||
+            !g_fLeftButtonDown && wParam == WM_LBUTTONDOWN && WindowFromPoint(pt) == g_hWnd)
+        {
+            if (IsOwnProcessWindow(hWnd_1))
+            {
+                POINT v41 = (POINT)pt;
+                ScreenToClient(g_hWnd, &v41);
+                LRESULT iHitTestResult = SendMessage(g_hWnd, TB_HITTEST, NULL, (LPARAM)&v41);
+                bool v20;
+                int v35 = 0;
+                HWND v25 = 0;
+                if ((int)iHitTestResult >= 0)
+                {
+                    if (g_fLeftButtonDown &&
+                        GetConfig(TEXT("DragTabs")) == 1)
+                    {
+                        if (wParam == WM_MOUSEMOVE)
+                        {
+                            int fIsSameWindow = 0;
+
+                            TBBUTTON tbButton = { 0 };
+                            if (SendMessage(g_hWnd, TB_GETBUTTON, g_iHitTestResult, (LPARAM)&tbButton))
+                            {
+                                HWND hWnd = tbButton.fsStyle & BTNS_DROPDOWN
+                                    ? nullptr
+                                    : GetTaskbarButtonWindow(&tbButton, g_fIsMicrosoft);
+
+                                v25 = hWndTaskTarget;
+                                fIsSameWindow = hWndTaskTarget == hWnd;
+                            }
+                            else
+                            {
+                                v25 = hWndTaskTarget;
+                            }
+
+                            if (!fIsSameWindow)
+                            {
+                                int v26;
+                                if (v25)
+                                {
+                                    v26 = FindTaskbarButtonForWindow(g_hWnd, v25, g_fIsMicrosoft);
+                                }
+                                else
+                                {
+                                    v26 = -1;
+                                }
+
+                                if (v26 == -1)
+                                {
+                                    v20 = 1;
+                                    v35 = 1;
+                                }
+                                else
+                                {
+                                    g_iHitTestResult = v26;
+                                }
+                            }
+
+                            if (!v20 && (abs(pt.x - g_ptHit.x) > 5 ||
+                                abs(y - g_ptHit.y)) > 5)
+                            {
+                                BOOL fIsHorizontal = IsWindowRectWide(g_hWnd);
+                                ChangeCursor(g_hWnd, fIsHorizontal, &g_hCursor, &g_hCursorOld);
+                            }
+
+                            if (iHitTestResult != g_iHitTestResult && !v20)
+                            {
+                                v20 = sub_10001420(g_hWnd, &g_iHitTestResult, iHitTestResult) == 0;
+                                v35 = v20;
+                            }
+                        }
+                        else if (wParam == WM_LBUTTONUP && dword_1000F030)
+                        {
+                            SendMessage(g_hWnd, WM_MOUSEMOVE, 1, -1);
+                            SendMessage(g_hWnd, WM_LBUTTONUP, 0, -1);
+                        }
+                    }
+                    else
+                    {
+                        if (wParam == WM_LBUTTONDOWN && GetConfig(TEXT("DragTabs")) == 1)
+                        {
+                            g_fLeftButtonDown = true;
+                            g_iHitTestResult = iHitTestResult;
+                            g_ptHit = pt;
+
+                            TBBUTTON tbButton = { 0 };
+                            if (SendMessage(g_hWnd, TB_GETBUTTON, iHitTestResult, (LPARAM)&tbButton))
+                            {
+                                HWND hWnd = tbButton.fsStyle & BTNS_DROPDOWN
+                                    ? nullptr
+                                    : GetTaskbarButtonWindow(&tbButton, g_fIsMicrosoft);
+
+                                hWndTaskTarget = hWnd;
+                            }
+                            dword_1000F034 = iHitTestResult;
+                        }
+                        if (wParam == WM_MBUTTONDOWN && GetConfig(TEXT("MiddleClickTabs")) == 1)
+                        {
+                            TBBUTTON tbButton;
+                            if (SendMessage(g_hWnd, TB_GETBUTTON, iHitTestResult, (LPARAM)&tbButton))
+                            {
+                                HWND hWnd = GetTaskbarButtonWindow(&tbButton, g_fIsMicrosoft);
+
+                                if (GetConfig(TEXT("MiddleClickTabs_Action")) == 2 ||
+                                    GetAsyncKeyState(VK_CONTROL) < 0)
+                                {
+                                    PostCloseCommand(hWnd);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (wParam == WM_LBUTTONUP && g_fLeftButtonDown || v20)
+                {
+                    g_fLeftButtonDown = false;
+                    g_iHitTestResult = -1;
+                    dword_1000F028 = 0;
+                    dword_1000F030 = 0;
+
+                    RestoreCursor(&g_hCursorOld);
+                }
+
+                return CallNextHookEx(g_hhkMain, code, wParam, lParam);
+            }
+        }
+
+        BOOL v28 = 0;
+        BOOL v37 = 0;
+        int v40 = 0;
+
+        if (hWnd_1 && hWnd != hWnd_1)
+        {
+            v28 = sub_100033C0(hWnd, pt, &v40, hWnd_1, g_fIsMicrosoft);
+            v37 = v28; // probably useless
+        }
+
+        // Different function? The variable use here is peculiar
+        HWND v29 = g_hWndSomething;
+        if (v28)
+        {
+            v29 = hWnd;
+        }
+        g_hWndSomething = v29;
+
+        if (v28 && GetConfig(TEXT("DragTabs")) == 1)
+        {
+            POINT v36 = pt;
+            ScreenToClient(g_hWndSomething, &v36);
+            LRESULT v30 = SendMessage(g_hWndSomething, TB_HITTEST, NULL, (LPARAM)&v36);
+            if ((int)v30 >= 0)
+            {
+                if (g_fIsDragging)
+                {
+                    if (wParam == WM_MOUSEMOVE)
+                    {
+                        if (abs(y - HIDWORD(qword_1000CC90)) > 5)
+                        {
+                            ChangeCursor(hWnd, 0, &g_hCursor, g_hCursorOld);
+                        }
+
+                        if (v30 != dword_1000F048)
+                        {
+                            sub_100017C0(g_hWndSomething, &dword_1000F048, v30);
+                        }
+                    }
+                }
+                else if (wParam == WM_MOUSEMOVE &&
+                    GetAsyncKeyState(VK_LBUTTON) < 0 &&
+                    GetAsyncKeyState(VK_RBUTTON) < 0)
+                {
+                    g_fIsDragging = true;
+                    dword_1000F048 = v30;
+                    qword_1000CC90 = pt;
+                }
+            }
+
+            if (wParam == WM_LBUTTONUP)
+            {
+                if (g_fIsDragging)
+                {
+                    int v31 = dword_1000F04C;
+                    g_fIsDragging = false;
+                    dword_1000F048 = -1;
+                    dword_1000F04C = 0;
+
+                    RestoreCursor(g_hCursorOld);
+
+                    if (v31)
+                    {
+                        SendMessage(g_hWndSomething, WM_MOUSEMOVE, 1, -1);
+                        SendMessage(g_hWndSomething, WM_LBUTTONUP, 0, -1);
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+
+    return CallNextHookEx(g_hhkMain, code, wParam, lParam);
 }
 
 LRESULT OtherHookProc(int code, WPARAM wParam, LPARAM lParam)
