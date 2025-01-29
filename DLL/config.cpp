@@ -1,4 +1,5 @@
 #include "config.h"
+#include "main.h"
 
 CONFIGRESPONSE GetConfig(LPCTSTR szName)
 {
