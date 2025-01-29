@@ -54,11 +54,11 @@ HHOOK g_hhkOther;
 
 #define GetClassNameGlobalBuffer(hWnd)         \
     memset(TextBuffer, 0, sizeof(TextBuffer)); \
-    GetClassName(hWnd, TextBuffer, 64)         \
+    GetClassName(hWnd, TextBuffer, 64)         
 
 #define GetWindowTextGlobalBuffer(hWnd)         \
     memset(TextBuffer, 0, sizeof(TextBuffer));  \
-    GetWindowText(hWnd, TextBuffer, 64)         \
+    GetWindowText(hWnd, TextBuffer, 64)         
 
 bool IsOwnProcessWindow(HWND hWnd)
 {
