@@ -8,7 +8,7 @@ With its last update being in 2009, and the homepage at which to download it hav
 
 ## Progress
 
-`Taskix{32, 64}.dll` (main DLL) is currently **74.07%** complete, featuring the following functions:
+`Taskix{32, 64}.dll` (main DLL) is currently **77.8%** complete, featuring the following functions:
  - [x] `DllMain` (export)
  - [x] `Hook` (export)
  - [x] `Unhook` (export)
@@ -23,7 +23,7 @@ With its last update being in 2009, and the homepage at which to download it hav
  - [x] `PostCloseCommand`
  - [x] `HandleWheelScroll`
  - [ ] `sub_10002810`
- - [ ] `sub_100028F0`
+ - [x] `SimulateClickCenter`
  - [x] `ChangeCursor`
  - [x] `RestoreCursor`
  - [x] `IsWindowRectWide`

@@ -18,7 +18,7 @@
  *  [x] PostCloseCommand
  *  [x] HandleWheelScroll
  *  [ ] sub_10002810
- *  [ ] sub_100028F0
+ *  [x] SimulateClickCenter
  *  [x] ChangeCursor
  *  [x] RestoreCursor
  *  [x] IsWindowRectWide
@@ -34,7 +34,7 @@
  * 
  * + the 2 resources
  * 
- * = 74.07% reimplemented (20/27 functions, 2/2 resources)
+ * = 77.8% reimplemented (21/27 functions, 2/2 resources)
  */
 
 HINSTANCE g_hInst;
@@ -550,6 +550,25 @@ bool RestoreCursor(HCURSOR *phCursorOrig)
     }
 
     return fResult;
+}
+
+LRESULT SimulateClickCenter(HWND hWnd, int iButtonId)
+{
+    RECT rect;
+    LRESULT lr = SendMessage(hWnd, TB_GETRECT, iButtonId, (LPARAM)&rect);
+
+    if (lr)
+    {
+        int iCenterX = (rect.right + rect.left) / 2;
+        int iCenterY = (rect.top + rect.bottom) / 2;
+
+        SendMessage(hWnd, WM_MOUSEMOVE, MK_LBUTTON, -1);
+        SendMessage(hWnd, WM_LBUTTONDOWN, MK_LBUTTON, iCenterX | (iCenterY << 16));
+
+        return 1;
+    }
+
+    return lr;
 }
 
 LRESULT OtherHookProc(int code, WPARAM wParam, LPARAM lParam)
