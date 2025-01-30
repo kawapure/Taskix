@@ -888,30 +888,6 @@ LRESULT MainHookProc(int code, WPARAM wParam, LPARAM lParam)
 
         HWND hWnd_1 = g_hWnd;
 
-        //if (!fIsTaskSwitcherWnd)
-        //{
-        //    bool fLeftButtonDown = g_fLeftButtonDown;
-        //    if (!g_fLeftButtonDown || wParam != WM_MOUSEMOVE || WindowFromPoint((POINT)pt) != g_hWnd)
-        //    {
-        //        if (!fLeftButtonDown || wParam != WM_LBUTTONUP)
-        //        {
-        //            if (fLeftButtonDown)
-        //            {
-        //                goto LABEL_112;
-        //            }
-        //            if (wParam != WM_LBUTTONUP)
-        //            {
-        //                goto LABEL_112;
-        //            }
-        //            HWND v18 = WindowFromPoint((POINT)pt);
-        //            if (v18 != g_hWnd)
-        //            {
-        //                goto LABEL_112;
-        //            }
-        //        }
-        //    }
-        //}
-
         if (fIsTaskSwitcherWnd ||
             g_fLeftButtonDown && wParam == WM_MOUSEMOVE && WindowFromPoint(pt) == g_hWnd ||
             g_fLeftButtonDown && wParam == WM_LBUTTONUP ||
@@ -987,8 +963,8 @@ LRESULT MainHookProc(int code, WPARAM wParam, LPARAM lParam)
                         }
                         else if (wParam == WM_LBUTTONUP && dword_1000F030)
                         {
-                            SendMessage(g_hWnd, WM_MOUSEMOVE, 1, -1);
-                            SendMessage(g_hWnd, WM_LBUTTONUP, 0, -1);
+                            SendMessage(g_hWnd, WM_MOUSEMOVE, MK_LBUTTON, -1);
+                            SendMessage(g_hWnd, WM_LBUTTONUP, NULL, -1);
                         }
                     }
                     else
@@ -1104,8 +1080,8 @@ LRESULT MainHookProc(int code, WPARAM wParam, LPARAM lParam)
 
                     if (v31)
                     {
-                        SendMessage(g_hWndSomething, WM_MOUSEMOVE, 1, -1);
-                        SendMessage(g_hWndSomething, WM_LBUTTONUP, 0, -1);
+                        SendMessage(g_hWndSomething, WM_MOUSEMOVE, MK_LBUTTON, -1);
+                        SendMessage(g_hWndSomething, WM_LBUTTONUP, NULL, -1);
                         return 1;
                     }
                 }
