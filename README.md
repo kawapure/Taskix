@@ -1,6 +1,6 @@
 # Taskix
 
-**Taskix** was a utility created by Adrian Schlesigner (Robust IT) in 2006 for improving the functionality of the Windows taskbar. It supported Windows XP and Windows Vista, but was abandoned after the release of Windows 7, receiving its final update (version 2.1) on the 5th of November 2009.
+**Taskix** was a utility created by Adrian Schlesinger (Robust IT) in 2006 for improving the functionality of the Windows taskbar. It supported Windows XP and Windows Vista, but was abandoned after the release of Windows 7, receiving its final update (version 2.1) on the 5th of November 2009.
 
 Taskix was a useful utility for being able to reorder taskbar items on Windows XP and Windows Vista, a feature not natively offered until Windows 7. Additionally, it allowed other mouse shortcuts to be configured on the taskbar, in a manner similarly applicable today with 7+ Taskbar Tweaker or Windhawk.
 
